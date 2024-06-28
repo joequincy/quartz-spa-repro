@@ -107,6 +107,14 @@ const _rebaseHtmlElement = (el: Element, attr: string, newBase: string | URL) =>
   const rebased = new URL(el.getAttribute(attr)!, newBase)
   el.setAttribute(attr, rebased.pathname + rebased.hash)
 }
+
+const _rebaseMetaElement = (el: Element, newBase: string | URL) => {
+  const contentValue = el.getAttribute('content')! 
+  const oldUrl = contentValue.split('url=').at(-1)!
+  const rebased = new URL(oldUrl, newBase)
+  el.setAttribute('content', contentValue.replace(oldUrl, rebased.pathname + rebased.hash))
+}
+
 export function normalizeRelativeURLs(el: Element | Document, destination: string | URL) {
   el.querySelectorAll('[href^="./"], [href^="../"]').forEach((item) =>
     _rebaseHtmlElement(item, "href", destination),
@@ -114,6 +122,9 @@ export function normalizeRelativeURLs(el: Element | Document, destination: strin
   el.querySelectorAll('[src^="./"], [src^="../"]').forEach((item) =>
     _rebaseHtmlElement(item, "src", destination),
   )
+  el.querySelectorAll('[http-equiv="refresh"][content*="url=./"], [http-equiv="refresh"][content*="url=../"]').forEach((item) => {
+    _rebaseMetaElement(item, destination)
+  })
 }
 
 const _rebaseHastElement = (
